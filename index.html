@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MindBridge — Ignite Talk</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --green:#3B6D11;--green-mid:#639922;--green-dark:#27500A;--accent:#9FE1CB;
+  --slide-duration:15;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#000;color:#fff;height:100vh;overflow:hidden;user-select:none}
+
+/* SLIDES */
+.deck{position:relative;width:100vw;height:100vh}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px;opacity:0;pointer-events:none;transition:opacity 0.5s}
+.slide.active{opacity:1;pointer-events:all}
+
+/* PROGRESS BAR */
+#progressBar{position:fixed;top:0;left:0;height:4px;background:var(--accent);z-index:100;transition:none}
+#slideCounter{position:fixed;bottom:20px;right:24px;font-size:13px;color:rgba(255,255,255,0.3);font-weight:600;z-index:100}
+#timer{position:fixed;bottom:20px;left:24px;font-size:13px;color:rgba(255,255,255,0.3);font-weight:600;z-index:100}
+
+/* NAV BUTTONS */
+.nav-btn{position:fixed;top:50%;transform:translateY(-50%);z-index:100;background:rgba(255,255,255,0.08);border:none;color:rgba(255,255,255,0.4);width:44px;height:44px;border-radius:50%;font-size:18px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center}
+.nav-btn:hover{background:rgba(255,255,255,0.15);color:#fff}
+#prevBtn{left:16px}
+#nextBtn{right:16px}
+
+/* AUTO PLAY */
+#autoBtn{position:fixed;top:20px;right:20px;z-index:100;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.2s}
+#autoBtn:hover{background:rgba(255,255,255,0.2)}
+#autoBtn.running{background:rgba(99,153,34,0.3);border-color:var(--accent);color:var(--accent)}
+
+/* BACKGROUNDS */
+.bg-dark{background:#0a0f07}
+.bg-green{background:linear-gradient(135deg,#0f1a0a,#1a2e10)}
+.bg-darker{background:#060a04}
+.bg-problem{background:linear-gradient(135deg,#1a0a0a,#2e1010)}
+.bg-insight{background:linear-gradient(135deg,#0a0f1a,#101a2e)}
+.bg-future{background:linear-gradient(135deg,#0f0f1a,#1a1a2e)}
+
+/* TEXT STYLES */
+.big{font-size:clamp(3rem,8vw,7rem);font-weight:800;letter-spacing:-3px;line-height:1.0;text-align:center}
+.big .accent{color:var(--accent)}
+.big .dim{color:rgba(255,255,255,0.25)}
+.medium{font-size:clamp(1.8rem,4vw,3.5rem);font-weight:700;letter-spacing:-1px;line-height:1.2;text-align:center}
+.medium .accent{color:var(--accent)}
+.small{font-size:clamp(1rem,2vw,1.6rem);color:rgba(255,255,255,0.6);text-align:center;line-height:1.6;max-width:700px}
+.small strong{color:#fff}
+.label{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:rgba(255,255,255,0.3);margin-bottom:16px;text-align:center}
+.stat-big{font-size:clamp(5rem,14vw,12rem);font-weight:900;letter-spacing:-6px;color:var(--accent);line-height:1;text-align:center}
+.stat-label{font-size:clamp(1rem,2.5vw,2rem);color:rgba(255,255,255,0.5);text-align:center;margin-top:8px}
+
+/* COMPONENTS */
+.pill-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:24px}
+.pill{background:rgba(159,225,203,0.12);border:1px solid rgba(159,225,203,0.3);border-radius:50px;padding:8px 20px;font-size:14px;font-weight:600;color:var(--accent)}
+.quote-box{background:rgba(255,255,255,0.05);border-left:4px solid var(--accent);border-radius:0 12px 12px 0;padding:24px 32px;max-width:680px;text-align:left}
+.quote-text{font-size:clamp(1.2rem,2.5vw,2rem);font-weight:600;color:#fff;line-height:1.4;margin-bottom:12px}
+.quote-attr{font-size:14px;color:rgba(255,255,255,0.4)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:24px;width:100%;max-width:900px}
+.col-card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:28px}
+.col-card h3{font-size:1.1rem;font-weight:700;margin-bottom:10px;color:var(--accent)}
+.col-card p{font-size:0.95rem;color:rgba(255,255,255,0.55);line-height:1.6}
+.highlight-box{background:rgba(99,153,34,0.12);border:1px solid rgba(99,153,34,0.3);border-radius:20px;padding:32px 48px;text-align:center;max-width:800px}
+.emoji-big{font-size:clamp(4rem,10vw,8rem);margin-bottom:16px;display:block;text-align:center}
+.flow-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:center}
+.flow-step{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px 24px;font-size:14px;font-weight:600;text-align:center;min-width:120px}
+.flow-arrow{color:var(--accent);font-size:1.5rem}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.url-box{background:rgba(159,225,203,0.08);border:2px solid rgba(159,225,203,0.3);border-radius:12px;padding:16px 32px;font-size:1.4rem;font-weight:700;color:var(--accent);letter-spacing:0.02em;margin-top:20px}
+</style>
+</head>
+<body>
+
+<div id="progressBar"></div>
+<div id="slideCounter">1 / 20</div>
+<div id="timer">15s</div>
+<button class="nav-btn" id="prevBtn">‹</button>
+<button class="nav-btn" id="nextBtn">›</button>
+<button id="autoBtn">▶ Auto-play</button>
+
+<div class="deck">
+
+  <!-- SLIDE 1 -->
+  <div class="slide active bg-dark">
+    <div class="label">Field Test — Emerging Media Technology</div>
+    <div class="big">What if school<br>taught you through<br><span class="accent">Minecraft?</span></div>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide bg-problem">
+    <div class="stat-big">1 in 5</div>
+    <div class="stat-label">kids has a learning difference</div>
+    <div class="small" style="margin-top:24px">Dyslexia. ADHD. Dyscalculia.<br>Traditional education <strong>wasn't built for them.</strong></div>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide bg-darker">
+    <div class="big">One lesson.<br><span class="dim">Taught the</span><br><span class="accent">same way.</span><br><span class="dim">For everyone.</span></div>
+  </div>
+
+  <!-- SLIDE 4 -->
+  <div class="slide bg-green">
+    <div class="label">The hypothesis</div>
+    <div class="highlight-box">
+      <div class="medium">AI can make personalized learning <span class="accent">genuinely accessible</span> for non-traditional learners</div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5 -->
+  <div class="slide bg-dark">
+    <div class="label">The field test</div>
+    <div class="big" style="font-size:clamp(2rem,5vw,4.5rem)">I built an AI tutor<br>that learns<br><span class="accent">how you learn</span></div>
+    <div class="pill-row">
+      <div class="pill">⚡ ADHD</div>
+      <div class="pill">🔤 Dyslexia</div>
+      <div class="pill">🔢 Dyscalculia</div>
+      <div class="pill">👁️ Visual</div>
+      <div class="pill">💬 Verbal</div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6 -->
+  <div class="slide bg-darker">
+    <div class="label">Step 1</div>
+    <div class="medium">A quiz that <span class="accent">detects</span><br>your learning style</div>
+    <div class="small" style="margin-top:24px">4 questions. No labels. No stigma.<br>Brixby figures it out for you.</div>
+  </div>
+
+  <!-- SLIDE 7 -->
+  <div class="slide bg-green">
+    <div class="label">Step 2</div>
+    <div class="medium">Pick what<br>you <span class="accent">love</span></div>
+    <div class="pill-row" style="margin-top:28px">
+      <div class="pill">⛏️ Minecraft</div>
+      <div class="pill">⚽ Soccer</div>
+      <div class="pill">🎵 Music</div>
+      <div class="pill">💄 Lip gloss</div>
+      <div class="pill">🚀 Space</div>
+      <div class="pill">🦕 Dinosaurs</div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8 -->
+  <div class="slide bg-darker">
+    <div class="label">The magic moment</div>
+    <div class="medium" style="margin-bottom:24px">Lip gloss <span class="accent">+</span> Civil War</div>
+    <div class="quote-box">
+      <div class="quote-text">"Supply chains, propaganda, economic inequality — all explained through the beauty industry."</div>
+      <div class="quote-attr">MindBridge lesson — same content, completely different framing</div>
+    </div>
+  </div>
+
+  <!-- SLIDE 9 -->
+  <div class="slide bg-dark">
+    <div class="label">Step 3</div>
+    <div class="medium">AI generates a<br><span class="accent">personalized lesson</span><br>in seconds</div>
+    <div class="flow-row" style="margin-top:32px">
+      <div class="flow-step">Your style</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">Your interest</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">Your grade</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" style="border-color:rgba(159,225,203,0.4);color:var(--accent)">Your lesson</div>
+    </div>
+  </div>
+
+  <!-- SLIDE 10 -->
+  <div class="slide bg-green">
+    <div class="label">Step 4</div>
+    <div class="medium">Then you <span class="accent">play</span> a game<br>to test what you learned</div>
+    <div class="pill-row" style="margin-top:28px">
+      <div class="pill">🎯 Quiz</div>
+      <div class="pill">✏️ Fill in the blank</div>
+      <div class="pill">📖 Story adventure</div>
+    </div>
+    <div class="small" style="margin-top:20px">The AI picks the format that fits best</div>
+  </div>
+
+  <!-- SLIDE 11 -->
+  <div class="slide bg-darker">
+    <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" style="width:140px;height:140px;margin-bottom:20px;filter:drop-shadow(0 8px 24px rgba(99,153,34,0.4));animation:float 3s ease-in-out infinite">
+      <rect x="18" y="28" width="28" height="24" rx="6" fill="#3B6D11"/>
+      <rect x="16" y="8" width="32" height="26" rx="10" fill="#639922"/>
+      <rect x="10" y="14" width="8" height="10" rx="4" fill="#639922"/>
+      <rect x="46" y="14" width="8" height="10" rx="4" fill="#639922"/>
+      <circle cx="24" cy="20" r="5" fill="#fff"/>
+      <circle cx="40" cy="20" r="5" fill="#fff"/>
+      <circle cx="25" cy="21" r="2.5" fill="#1a1a1a"/>
+      <circle cx="41" cy="21" r="2.5" fill="#1a1a1a"/>
+      <path d="M25 30 Q32 35 39 30" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <ellipse cx="19" cy="26" rx="4" ry="2.5" fill="#ff9999" opacity="0.6"/>
+      <ellipse cx="45" cy="26" rx="4" ry="2.5" fill="#ff9999" opacity="0.6"/>
+      <rect x="6" y="30" width="13" height="6" rx="3" fill="#3B6D11"/>
+      <rect x="45" y="30" width="13" height="6" rx="3" fill="#3B6D11"/>
+      <rect x="21" y="50" width="9" height="6" rx="3" fill="#27500A"/>
+      <rect x="34" y="50" width="9" height="6" rx="3" fill="#27500A"/>
+      <text x="32" y="45" font-size="8" fill="#9FE1CB" text-anchor="middle">✦</text>
+    </svg>
+    <div class="medium">Meet <span class="accent">Brixby</span></div>
+    <div class="small" style="margin-top:16px">He walks around. He dances. He trips and falls.<br>He celebrates when you win.<br><strong>He makes learning feel like less of a chore.</strong></div>
+  </div>
+
+  <!-- SLIDE 12 -->
+  <div class="slide bg-dark">
+    <div class="label">For parents</div>
+    <div class="medium">Every session ends with<br>a <span class="accent">parent summary</span></div>
+    <div class="small" style="margin-top:24px">What was taught. Why the approach works.<br>Dinner table conversation starters.<br><strong>Next topics to explore together.</strong></div>
+  </div>
+
+  <!-- SLIDE 13 -->
+  <div class="slide bg-green">
+    <div class="label">What users said</div>
+    <div class="quote-box">
+      <div class="quote-text">"I picked lip gloss as my interest and it actually connected it to the Civil War. I didn't expect it to work but it did."</div>
+      <div class="quote-attr">— Field test participant</div>
+    </div>
+  </div>
+
+  <!-- SLIDE 14 -->
+  <div class="slide bg-darker">
+    <div class="label">What worked</div>
+    <div class="two-col">
+      <div class="col-card">
+        <h3>✅ Interest connection</h3>
+        <p>When the interest was genuinely woven in, engagement noticeably increased</p>
+      </div>
+      <div class="col-card">
+        <h3>✅ Learning style detection</h3>
+        <p>Users felt the quiz was accurate — it removed the stigma of self-labeling</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 15 -->
+  <div class="slide bg-problem">
+    <div class="label">What didn't</div>
+    <div class="two-col">
+      <div class="col-card">
+        <h3>⚠️ Depth at lower grades</h3>
+        <p>Early versions were too simple — needed more explicit grade-level calibration</p>
+      </div>
+      <div class="col-card">
+        <h3>⚠️ Loading times</h3>
+        <p>AI generation takes time — required multiple iterations to optimize for speed</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 16 -->
+  <div class="slide bg-dark">
+    <div class="label">The insight</div>
+    <div class="highlight-box">
+      <div class="medium">The technology works.<br>The <span class="accent">framing</span> is everything.</div>
+    </div>
+    <div class="small" style="margin-top:24px">Same AI. Same topic. Completely different experience<br>when you meet the learner where they are.</div>
+  </div>
+
+  <!-- SLIDE 17 -->
+  <div class="slide bg-future">
+    <div class="label">Where this goes</div>
+    <div class="medium" style="margin-bottom:28px">This isn't just an app.<br>It's a <span class="accent">new model</span> for education.</div>
+    <div class="pill-row">
+      <div class="pill">🏫 Schools</div>
+      <div class="pill">👩‍⚕️ Special ed</div>
+      <div class="pill">📚 Tutoring centers</div>
+      <div class="pill">🏠 Home learning</div>
+    </div>
+  </div>
+
+  <!-- SLIDE 18 -->
+  <div class="slide bg-darker">
+    <div class="label">What AI makes possible</div>
+    <div class="big" style="font-size:clamp(2rem,5vw,4rem)">A <span class="accent">personalized tutor</span><br>for every kid.<br><span class="dim">Not just the ones</span><br><span class="dim">who can afford one.</span></div>
+  </div>
+
+  <!-- SLIDE 19 -->
+  <div class="slide bg-green">
+    <div class="label">The hypothesis — revisited</div>
+    <div class="highlight-box">
+      <div class="medium"><span class="accent">Confirmed.</span><br>AI can make personalized learning accessible — if you build it around the learner, not the curriculum.</div>
+    </div>
+  </div>
+
+  <!-- SLIDE 20 -->
+  <div class="slide bg-dark">
+    <div class="big">Mind<span class="accent">Bridge</span></div>
+    <div class="small" style="margin-top:16px;margin-bottom:28px">Learning built for every kind of mind</div>
+    <div class="url-box">mindbridgesyr.vercel.app</div>
+    <div class="small" style="margin-top:20px;font-size:0.85rem;opacity:0.4">Jonah Wasserman · Newhouse School · Field Test 2026</div>
+  </div>
+
+</div>
+
+<script>
+let current=0,total=20,autoPlaying=false,autoInterval=null,tickInterval=null,timeLeft=15;
+const slides=document.querySelectorAll('.slide');
+
+function goTo(n){
+  slides[current].classList.remove('active');
+  current=Math.max(0,Math.min(total-1,n));
+  slides[current].classList.add('active');
+  document.getElementById('slideCounter').textContent=`${current+1} / ${total}`;
+  updateProgress();
+  resetTimer();
+}
+
+function updateProgress(){
+  const pct=((current+1)/total)*100;
+  document.getElementById('progressBar').style.width=pct+'%';
+}
+
+function resetTimer(){
+  timeLeft=15;
+  document.getElementById('timer').textContent='15s';
+}
+
+function startAuto(){
+  autoPlaying=true;
+  document.getElementById('autoBtn').textContent='⏸ Pause';
+  document.getElementById('autoBtn').classList.add('running');
+  timeLeft=15;
+  tickInterval=setInterval(()=>{
+    timeLeft--;
+    document.getElementById('timer').textContent=timeLeft+'s';
+    if(timeLeft<=0){
+      if(current<total-1) goTo(current+1);
+      else stopAuto();
+    }
+  },1000);
+}
+
+function stopAuto(){
+  autoPlaying=false;
+  document.getElementById('autoBtn').textContent='▶ Auto-play';
+  document.getElementById('autoBtn').classList.remove('running');
+  clearInterval(tickInterval);
+  resetTimer();
+}
+
+document.getElementById('autoBtn').onclick=()=>{ if(autoPlaying) stopAuto(); else startAuto(); };
+document.getElementById('prevBtn').onclick=()=>{ stopAuto(); goTo(current-1); };
+document.getElementById('nextBtn').onclick=()=>{ if(!autoPlaying) goTo(current+1); };
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '){ if(!autoPlaying) goTo(current+1); }
+  if(e.key==='ArrowLeft'){ stopAuto(); goTo(current-1); }
+  if(e.key==='Enter'){ if(autoPlaying) stopAuto(); else startAuto(); }
+});
+
+updateProgress();
+</script>
+</body>
+</html>
